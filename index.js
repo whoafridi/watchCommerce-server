@@ -19,7 +19,9 @@ async function run() {
 
     const database = client.db('watch_store');
     const productCollection = database.collection('products');
-    //const bookCollection = database.collection('booked');
+    const orderCollection = database.collection('order');
+    const reviewCollection = database.collection('review');
+    const usersCollection = database.collection('user');
 
     // get all services
     app.get("/products", async (req,res)=>{
@@ -43,29 +45,97 @@ async function run() {
       res.json(result);
     });
 
-  //    // get API for booking var query = { address: /^S/ }
-  //    app.get('/booked', async (req, res) => {
-  //     let query = {email : /\S+@\S+\.\S+/}
-  //     const cursor = bookCollection.find(query);
-  //     const service = await cursor.toArray();
-  //     res.send(service);
-  //   });
+    // DELETE API for a product
+    app.delete('/products/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const result = await productCollection.deleteOne(query);
+      res.json(result);
+    });
 
-  //   // POST API for booking added
-  //   app.post('/booked', async (req, res) => {
-  //     const booked = req.body;
-  //     const result = await bookCollection.insertOne(booked);
-  //     res.json(result);
-  //   });
+    // get API for all order
+    app.get('/order', async (req, res) => {
+      const cursor = orderCollection.find({});
+      const service = await cursor.toArray();
+      res.send(service);
+    });
+
+     // get API for order by email
+     app.get('/order/:email', async (req, res) => {
+      const cursor = orderCollection.find({ email: req.params.email });
+      const service = await cursor.toArray();
+      res.send(service);
+    });
+
+    // POST API for order added
+    app.post('/order', async (req, res) => {
+      const booked = req.body;
+      const result = await orderCollection.insertOne(booked);
+      res.json(result);
+    });
 
    
-  // // DELETE API for a booking
-  // app.delete('/booked/:id', async (req, res) => {
-  //     const id = req.params.id;
-  //     const query = { _id: ObjectId(id) };
-  //     const result = await bookCollection.deleteOne(query);
-  //     res.json(result);
-  // })
+  // DELETE API for a booking
+  app.delete('/order/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const result = await orderCollection.deleteOne(query);
+      res.json(result);
+  });
+
+   // get API for review
+   app.get('/review', async (req, res) => {
+    const result =  reviewCollection.find({});
+    const service = await result.toArray();
+    res.send(service);
+  });
+
+   // POST API for review
+   app.post('/review', async (req, res) => {
+    const review = req.body;
+    const result = await reviewCollection.insertOne(review);
+    res.json(result);
+  });
+
+  // post users 
+  app.post('/users', async (req, res) => {
+    const user = req.body;
+    const result = await usersCollection.insertOne(user);
+    res.json(result);
+  });
+
+  // add into database after google singin 
+  app.put('/users', async (req, res) => {
+    const user = req.body;
+    const filter = { email: user.email };
+    const options = { upsert: true };
+    const updateDoc = { $set: user };
+    const result = await usersCollection.updateOne(filter, updateDoc, options);
+    res.json(result);
+});
+
+  // check admin
+  app.get('/users/:email', async (req, res) => {
+    const email = req.params.email;
+    const query = { email: email };
+    const user = await usersCollection.findOne(query);
+    let isAdmin = false;
+    if (user?.role === 'admin') {
+        isAdmin = true;
+    }
+    res.json({ admin: isAdmin });
+  });
+
+  // update admin
+  app.put('/users/admin', async (req, res) => {
+    const user = req.body;
+
+    const filter = { email: user.email };
+    const updateDoc = { $set: { role: 'admin' } };
+    const result = await usersCollection.updateOne(filter, updateDoc);
+    res.json(result);
+
+});
 
   }
   finally {
