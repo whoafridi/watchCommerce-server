@@ -27,6 +27,7 @@ async function run() {
     const reviewCollection = database.collection("review");
     const usersCollection = database.collection("user");
 
+    // product api //
     // get all services
     app.get("/products", async (req, res) => {
       const cursor = productCollection.find({});
@@ -57,11 +58,20 @@ async function run() {
       res.json(result);
     });
 
+    // order api //
     // get API for all order
     app.get("/order", async (req, res) => {
       const cursor = orderCollection.find({});
       const service = await cursor.toArray();
       res.send(service);
+    });
+
+    // GET Single order
+    app.get("/order/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const result = await orderCollection.findOne(query);
+      res.json(result);
     });
 
     // get API for order by email
@@ -86,6 +96,21 @@ async function run() {
       res.json(result);
     });
 
+    // update order
+    app.put("/order/:id", async (req, res) => {
+      const id = req.params.id;
+      const payment = req.body;
+      const filter = { _id: ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          payment: payment,
+        },
+      };
+      const result = await orderCollection.updateOne(filter, updateDoc);
+      res.json(result);
+    });
+
+    // review api //
     // get API for review
     app.get("/review", async (req, res) => {
       const result = reviewCollection.find({});
@@ -142,10 +167,11 @@ async function run() {
       const result = await usersCollection.updateOne(filter, updateDoc);
       res.json(result);
     });
+
     // payment intent
     app.post("/create-payment-intent", async (req, res) => {
       const paymentInfo = req.body;
-      const amount = paymentInfo.price * 100;
+      const amount = paymentInfo.price;
       const paymentIntent = await stripe.paymentIntents.create({
         currency: "usd",
         amount: amount,
