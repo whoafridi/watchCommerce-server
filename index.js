@@ -69,14 +69,17 @@ async function run() {
     // GET Single order
     app.get("/order/:id", async (req, res) => {
       const id = req.params.id;
+      console.log(id);
       const query = { _id: ObjectId(id) };
       const result = await orderCollection.findOne(query);
       res.json(result);
     });
 
     // get API for order by email
-    app.get("/order/:email", async (req, res) => {
-      const cursor = orderCollection.find({ email: req.params.email });
+    app.get("/orders", async (req, res) => {
+      const email = req.query.email;
+      console.log(email);
+      const cursor = orderCollection.find({ email: email });
       const service = await cursor.toArray();
       res.send(service);
     });
